@@ -6,7 +6,7 @@
  * Time: 6:58 PM
  */
 
-namespace Repository;
+namespace PhpQ\Repository;
 
 
 use Doctrine\ORM\Mapping as ORM;
@@ -45,4 +45,12 @@ class Message
      * @var Queue
      */
     protected $queue;
+
+    public function setId($id) {
+        $this->id = $id;
+    }
+
+    public function getId() {
+        return $this->id;
+    }
 }

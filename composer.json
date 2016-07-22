@@ -24,15 +24,17 @@
         "symfony/config": "~2.8",
         "cocur/slugify": "~1.0",
         "symfony/yaml": "~2.8",
-        "doctrine/orm": "2.4.*"
+        "doctrine/orm": "2.4.*",
+        "monolog/monolog": "^1.20",
+        "react/react": "^0.4.2"
     },
     "require-dev": {
         "phpunit/phpunit": "*"
     },
     "autoload": {
-        "psr-4": {"PhpQ\\": "src/"}
+        "psr-4": {"PhpQ\\": "src/PhpQ"}
     },
     "autoload-dev": {
-        "psr-4": { "PhpQ\\Test\\": "tests/" }
+        "psr-4": { "PhpQ\\": "tests/PhpQ" }
     }
 }

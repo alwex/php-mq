@@ -7,7 +7,7 @@
  */
 
 
-namespace Repository;
+namespace PhpQ\Repository;
 
 use Doctrine\ORM\Mapping as ORM;
 

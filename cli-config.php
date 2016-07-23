@@ -7,6 +7,6 @@
  */
 
 // cli-config.php
-require_once "bootstrap.php";
-
+$configuration = \PhpMQ\Configuration::load();
+$entityManager = $configuration->getEntityManager();
 return \Doctrine\ORM\Tools\Console\ConsoleRunner::createHelperSet($entityManager);

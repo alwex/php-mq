@@ -15,6 +15,9 @@ use Symfony\Component\Yaml\Yaml;
 
 class Configuration
 {
+    const CONFIG_DIR = '.phpmq';
+    const CONFIG_FILE = 'configuration.yml';
+
     /**
      * @var Yaml
      */
@@ -26,30 +29,40 @@ class Configuration
     private $entityManager;
 
 
-    public static function load($configurationFile)
+    public static function load()
     {
-        return new self($configurationFile);
+        return new self();
     }
 
-    private function __construct($configurationFile)
+    public static function create($params)
     {
-        if (file_exists($configurationFile)) {
-            $params = Yaml::parse(file_get_contents($configurationFile));
+
+        if (file_exists(self::CONFIG_DIR.'/'.self::CONFIG_FILE)
+            || is_dir(self::CONFIG_DIR)
+        ) {
+            throw new \RuntimeException("configuration file already exists !!!");
+        }
+
+        mkdir(self::CONFIG_DIR);
+        $yamlString = Yaml::dump($params);
+
+        file_put_contents(self::CONFIG_DIR.'/'.self::CONFIG_FILE, $yamlString);
+    }
+
+    private function __construct()
+    {
+        if (file_exists(self::CONFIG_DIR.'/'.self::CONFIG_FILE)) {
+
+            $this->params = Yaml::parse(file_get_contents(self::CONFIG_DIR.'/'.self::CONFIG_FILE));
+
             // doctrine configuration
             $isDev = true;
-            $config = Setup::createAnnotationMetadataConfiguration(array(__DIR__."/../Repository"), $isDev);
+            $config = Setup::createAnnotationMetadataConfiguration(array(__DIR__."/Repository"), $isDev);
 
-            // database configuration parameters
-            $conn = array(
-                'driver' => 'pdo_sqlite',
-                'path' => __DIR__.'/db.sqlite',
-                'uesr' => '',
-                'password' => '',
-                'dbname' => '',
-            );
+            $connection = $this->params['db'];
 
             // obtaining the entity manager
-            $this->entityManager = $entityManager = EntityManager::create($conn, $config);
+            $this->entityManager = $entityManager = EntityManager::create($connection, $config);
         }
     }
 
@@ -59,5 +72,13 @@ class Configuration
     public function getParams()
     {
         return $this->params;
+    }
+
+    /**
+     * @return EntityManager
+     */
+    public function getEntityManager()
+    {
+        return $this->entityManager;
     }
 }

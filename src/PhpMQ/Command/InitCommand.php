@@ -53,5 +53,19 @@ class InitCommand extends AbstractCommand
 
         $confirmationQuestion = new ConfirmationQuestion("are you sure ? <info>(yes/no, default no)</info>: ", false);
         $confirmation = $questions->ask($input, $output, $confirmationQuestion);
+
+        $params = array(
+            'db' => array(
+                'driver' => 'pdo_'.$driver,
+                'path' => $dbName,
+                'user' => $dbUserName,
+                'password' => $dbUserPassword,
+                'dbname' => $dbName,
+                'port' => $dbPort,
+                'host' => $dbHost,
+            ),
+        );
+
+        Configuration::create($params);
     }
 }

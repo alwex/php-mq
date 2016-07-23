@@ -57,8 +57,10 @@ class BrokerD
                     serialize($message->getData()))
                 );
 
+                $logger->addInfo("un message est envoyé");
                 /** @var $worker \React\Socket\Connection */
-                $worker->write($serialized . "[END]");
+                $worker->write("salut bro");
+                $worker->write("NEXTBUDDY");
             }
         });
 

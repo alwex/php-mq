@@ -13,6 +13,8 @@ use React;
 
 class Consumer
 {
+    private $buffer;
+
     public function __construct()
     {
         $loop = React\EventLoop\Factory::create();
@@ -23,12 +25,12 @@ class Consumer
         $tcpConnector = new React\SocketClient\Connector($loop, $dns);
 
         $tcpConnector->create('127.0.0.1', 1337)->then(function (React\Stream\Stream $stream) {
-            $stream->on('data', function ($data) {
+            $stream->on('data', function ($data) use ($stream) {
 
-                $export = strlen($data);
-                echo $export.": ";
-                echo (strpos($data, "[END]"))."\n";
+                echo $data. "\n";
+                $buf = explode("NEXTBUDDY", $data);
 
+                var_dump($buf);
                 /*
                     $message = unserialize($data);
 
@@ -42,8 +44,9 @@ class Consumer
                 echo "FULL DRAIN\n";
             });
 
-            $stream->on('end', function () {
+            $stream->on('something', function () {
                 echo "fin de fichier gasrs\n";
+                exit;
             });
         });
 

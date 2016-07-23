@@ -6,7 +6,7 @@
  * Time: 6:43 PM
  */
 
-namespace PhpQ;
+namespace PhpMQ;
 
 use PhpQ\Repository\Message;
 use React;

@@ -6,7 +6,7 @@
  * Time: 5:33 PM
  */
 
-require_once __DIR__ . '/vendor/autoload.php';
+require_once __DIR__.'/vendor/autoload.php';
 
 $logger = new \Monolog\Logger('log');
 $logger->pushHandler(new \Monolog\Handler\StreamHandler('php://stdout', \Monolog\Logger::DEBUG));
@@ -22,7 +22,7 @@ $socket->on('connection', function ($connection) use ($workers, $logger) {
 
     $workers->attach($connection);
 
-    $connection->on('end', function() use ($connection, $workers, $logger) {
+    $connection->on('end', function () use ($connection, $workers, $logger) {
         $logger->addInfo("il est parti l'enculé");
         $workers->detach($connection);
     });
@@ -34,10 +34,10 @@ $loop->addPeriodicTimer(2, function () use ($logger) {
     $logger->addInfo("Memory: $kmem KiB");
 });
 
-$timer = $loop->addPeriodicTimer(0.5, function() use ($workers, $logger) {
+$timer = $loop->addPeriodicTimer(0.5, function () use ($workers, $logger) {
     foreach ($workers as $worker) {
 
-        $message = new PhpQ\Repository\Message();
+        $message = new PhpMQ\Repository\Message();
         $message->setId(rand(0, 500));
 
         $serialized = serialize($message);

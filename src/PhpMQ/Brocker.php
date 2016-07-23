@@ -6,7 +6,7 @@
  * Time: 6:59 PM
  */
 
-namespace PhpQ;
+namespace PhpMQ;
 
 
 class Brocker

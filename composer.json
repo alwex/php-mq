@@ -1,5 +1,5 @@
 {
-    "name": "alwex/php-q",
+    "name": "alwex/php-mq",
     "description": "plain old php message queue system with a PDO driven database backend",
     "homepage": "https://github.com/alwex/php-q",
     "type": "library",
@@ -12,7 +12,7 @@
     ],
     "minimum-stability": "stable",
     "bin": [
-        "bin/phpq"
+        "bin/phpmqd"
     ],
     "config": {
         "bin-dir": "bin"
@@ -32,9 +32,9 @@
         "phpunit/phpunit": "*"
     },
     "autoload": {
-        "psr-4": {"PhpQ\\": "src/PhpQ"}
+        "psr-4": {"PhpMQ\\": "src/PhpMQ"}
     },
     "autoload-dev": {
-        "psr-4": { "PhpQ\\": "tests/PhpQ" }
+        "psr-4": { "PhpMQ\\": "tests/PhpMQ" }
     }
 }

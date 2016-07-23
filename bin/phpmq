@@ -20,7 +20,7 @@ use Symfony\Component\Console\Application;
 use PhpMQ\Configuration;
 
 // load configuration
-$config = Configuration::load(__DIR__.'/../.phpmq/configuration.yml');
+$config = Configuration::load();
 
 // start the application
 $application = new Application();

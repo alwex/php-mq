@@ -13,31 +13,4 @@ if (file_exists(__DIR__ . '/../vendor/autoload.php')) {
     require_once __DIR__ . '/../../../autoload.php';
 }
 
-use Symfony\Component\Console\Application;
-use Doctrine\ORM\Tools\Setup;
-use Doctrine\ORM\EntityManager;
-
-// doctrine configuration
-$isDev = true;
-$config = Setup::createAnnotationMetadataConfiguration(array(__DIR__ . "/src/Repository"), $isDev);
-
-// database configuration parameters
-$conn = array(
-    'driver' => 'pdo_sqlite',
-    'path' => __DIR__ . '/db.sqlite',
-);
-
-// obtaining the entity manager
-$entityManager = EntityManager::create($conn, $config);
-
-// start the application
-
-$application = new Application();
-//$application->add(new InitCommand());
-//$application->add(new CreateCommand());
-//$application->add(new DownCommand());
-//$application->add(new UpCommand());
-//$application->add(new AddEnvCommand());
-//$application->add(new StatusCommand());
-//$application->add(new InitCommand());
-$application->run();
+\PhpMQ\BrokerD::run();

@@ -2,25 +2,20 @@
 /**
  * Created by PhpStorm.
  * User: aguidet
- * Date: 21/07/16
- * Time: 6:58 PM
+ * Date: 23/07/16
+ * Time: 4:19 PM
  */
 
 namespace PhpMQ\Repository;
 
-
-use Doctrine\ORM\Mapping as ORM;
-use Doctrine\ORM\Mapping\Entity;
-
 /**
- * @Entity @Table(name="messages")
+ * @Entity @Table(name="dead_messages")
  * @HasLifecycleCallbacks
  */
-class Message extends AbstractMessage
+class DeadMessage extends AbstractMessage
 {
-
     /**
-     * @ManyToOne(targetEntity="Queue", inversedBy="messages")
+     * @ManyToOne(targetEntity="Queue", inversedBy="dead_messages")
      * @var Queue
      */
     protected $queue;

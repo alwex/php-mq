@@ -42,13 +42,11 @@ class BrokerD
             $logger->addInfo("Memory: $kmem KiB");
         });
 
-        $timer = $loop->addPeriodicTimer(0.01, function () use ($workers, $logger) {
+        $timer = $loop->addPeriodicTimer(0.1, function () use ($workers, $logger) {
 
             /** @var React\Socket\Connection $worker */
             foreach ($workers as $worker) {
                 $message = Broker::get()->getNextMessage('Q1');
-
-                $serialized = serialize($message);
 
                 $logger->addInfo(sprintf(
                     "sending message [%s] to [%s] data: %s",
@@ -59,8 +57,8 @@ class BrokerD
 
                 $logger->addInfo("un message est envoyé");
                 /** @var $worker \React\Socket\Connection */
-                $worker->write("salut bro");
-                $worker->write("NEXTBUDDY");
+                $worker->write(serialize($message));
+                $worker->write(PhpMQ\Utility\MessageBuilder::SEPARATOR);
             }
         });
 

@@ -8,15 +8,20 @@
 
 namespace PhpMQ;
 
-use PhpQ\Repository\Message;
+use PhpMQ\Utility\MessageBuilder;
 use React;
 
 class Consumer
 {
-    private $buffer;
+    /**
+     * @var MessageBuilder
+     */
+    private $messageBuilder;
 
     public function __construct()
     {
+        $this->messageBuilder = new MessageBuilder();
+
         $loop = React\EventLoop\Factory::create();
 
         $dnsResolverFactory = new React\Dns\Resolver\Factory();
@@ -25,29 +30,20 @@ class Consumer
         $tcpConnector = new React\SocketClient\Connector($loop, $dns);
 
         $tcpConnector->create('127.0.0.1', 1337)->then(function (React\Stream\Stream $stream) {
-            $stream->on('data', function ($data) use ($stream) {
-
-                echo $data. "\n";
-                $buf = explode("NEXTBUDDY", $data);
-
-                var_dump($buf);
-                /*
-                    $message = unserialize($data);
-
-                    var_dump(get_class($message));
-
-                    $this->run($message);
-                */
+            $stream->on('data', function ($data) {
+                $this->messageBuilder->addData($data);
             });
+        });
 
-            $stream->on('full-drain', function () {
-                echo "FULL DRAIN\n";
-            });
-
-            $stream->on('something', function () {
-                echo "fin de fichier gasrs\n";
-                exit;
-            });
+        $timer = $loop->addPeriodicTimer(0.1, function () {
+            if ($this->messageBuilder->hasMessages()) {
+                $messages = $this->messageBuilder->getMessages();
+                var_dump($messages);
+                foreach ($messages as $message) {
+                    $this->run(unserialize($message));
+                }
+                $this->messageBuilder->clearMessages();
+            }
         });
 
         $loop->run();

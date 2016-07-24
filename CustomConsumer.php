@@ -12,6 +12,5 @@ class CustomConsumer extends \PhpMQ\Consumer {
         $kmem = memory_get_usage(true) / 1024;
         echo("Memory: $kmem KiB\n");
         var_dump($message->getData());
-
     }
 }

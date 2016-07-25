@@ -8,59 +8,76 @@
 
 namespace PhpMQ;
 
+use Monolog\Logger;
 use React;
 use PhpMQ;
 
 class BrokerD
 {
+    private $dispatcher;
+    /**
+     * @var Logger
+     */
+    private $logger;
 
-    public static function run()
+    public function __construct()
     {
+
         $logger = new \Monolog\Logger('log');
         $logger->pushHandler(new \Monolog\Handler\StreamHandler('php://stdout', \Monolog\Logger::DEBUG));
 
+        $this->logger = $logger;
+        $this->dispatcher = new Dispatcher($logger);
+    }
 
+    public function run()
+    {
         $loop = React\EventLoop\Factory::create();
         $socket = new React\Socket\Server($loop);
 
-        $workers = new \SplObjectStorage();
+        // accept connections
+        // and deal with consumer messages
+        $socket->on('connection', function ($connection) {
+            /** @var React\Socket\Connection $connection */
+            $this->logger->addInfo("consumer connected from {$connection->getRemoteAddress()}");
 
-        $socket->on('connection', function ($connection) use ($workers, $logger) {
-            $logger->addInfo("bienvenu enflure! {$connection->getRemoteAddress()}");
+            $connection->on('data', function($data) use ($connection) {
+                $this->logger->addDebug("received data: " . $data);
+                $this->dispatcher->process($data, $connection);
+            });
 
-            $workers->attach($connection);
+            $connection->on('end', function () use ($connection) {
 
-            $connection->on('end', function () use ($connection, $workers, $logger) {
-                $logger->addInfo("il est parti l'enculé");
-                $workers->detach($connection);
+                $this->logger->addInfo("consumer disconnected");
             });
         });
 
+        /*
+        $loop->addPeriodicTimer(1, function() use ($workers, $logger) {
+            $message = Broker::get()->getNextMessage('Q1');
 
-        $loop->addPeriodicTimer(2, function () use ($logger) {
-            $kmem = memory_get_usage(true) / 1024;
-            $logger->addInfo("Memory: $kmem KiB");
-        });
-
-        $timer = $loop->addPeriodicTimer(0.1, function () use ($workers, $logger) {
-
-            /** @var React\Socket\Connection $worker */
             foreach ($workers as $worker) {
-                $message = Broker::get()->getNextMessage('Q1');
 
                 $logger->addInfo(sprintf(
-                    "sending message [%s] to [%s] data: %s",
-                    $message->getId(),
-                    $worker->getRemoteAddress(),
-                    serialize($message->getData()))
+                        "sending message [%s] to [%s] data: %s",
+                        $message->getId(),
+                        $worker->getRemoteAddress(),
+                        serialize($message->getData()))
                 );
 
                 $logger->addInfo("un message est envoyé");
-                /** @var $worker \React\Socket\Connection */
                 $worker->write(serialize($message));
                 $worker->write(PhpMQ\Utility\MessageBuilder::SEPARATOR);
             }
         });
+        */
+
+        /*
+        $loop->addPeriodicTimer(2, function () use ($logger) {
+            $kmem = memory_get_usage(true) / 1024;
+            $logger->addInfo("Memory: $kmem KiB");
+        });
+        */
 
         // just run the broker and wait for connections
 

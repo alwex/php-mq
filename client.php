@@ -15,13 +15,13 @@ $dns = $dnsResolverFactory->createCached('8.8.8.8', $loop);
 
 $tcpConnector = new React\SocketClient\Connector($loop, $dns);
 
+
 $tcpConnector->create('127.0.0.1', 1337)->then(function (React\Stream\Stream $stream) {
-    $stream->on('data', function ($data) {
-        $message = unserialize($data);
-        var_dump($message->getId());
-    });
 
-
+    $data = str_repeat('a', $stream->bufferSize + 10);
+    $stream->bufferSize += 10;
+    $stream->write($data);
+    //$stream->close();
 });
 
 $loop->run();

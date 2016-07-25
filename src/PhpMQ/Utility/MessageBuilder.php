@@ -12,6 +12,12 @@ namespace PhpMQ\Utility;
 class MessageBuilder
 {
 
+    const KEY_HANDSHAKE = 'handshake';
+    const KEY_ALIVE = 'alive';
+    const KEY_ACK_SUCCESS = 'success';
+    const KEY_ACK_FAILURE = 'failure';
+    const KEY_ACK_RETRY = 'retry';
+
     const SEPARATOR = '{@-@}';
     const KEY_PART = 'part';
     const KEY_REMAIN = 'remain';

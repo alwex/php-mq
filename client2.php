@@ -9,4 +9,4 @@
 require_once 'vendor/autoload.php';
 require_once 'CustomConsumer.php';
 
-$consumer = new CustomConsumer();
+$consumer = new CustomConsumer('Q1');

@@ -24,11 +24,11 @@ class Envelope
 
         switch ($this->verb) {
             case PhpMQP::VERB_HANDSHAKE:
+            case PhpMQP::VERB_GET:
                 $this->cid = $values[1];
                 $this->qname = $values[2];
                 break;
             case PhpMQP::VERB_STILL_ALIVE:
-            case PhpMQP::VERB_GET:
             case PhpMQP::VERB_BYE:
                 $this->cid = $values[1];
                 break;

@@ -20,14 +20,16 @@ class BrokerD
      */
     private $logger;
 
-    public function __construct()
+    /**
+     * @var PhpMQ\Protocol\PhpMQP
+     */
+    private $protocol;
+
+    public function __construct(\Monolog\Logger $logger)
     {
-
-        $logger = new \Monolog\Logger('log');
-        $logger->pushHandler(new \Monolog\Handler\StreamHandler('php://stdout', \Monolog\Logger::DEBUG));
-
         $this->logger = $logger;
         $this->dispatcher = new Dispatcher($logger);
+        $this->protocol = new PhpMQ\Protocol\PhpMQP();
     }
 
     public function run()
@@ -41,43 +43,29 @@ class BrokerD
             /** @var React\Socket\Connection $connection */
             $this->logger->addInfo("consumer connected from {$connection->getRemoteAddress()}");
 
-            $connection->on('data', function($data) use ($connection) {
-                $this->logger->addDebug("received data: " . $data);
-                $this->dispatcher->process($data, $connection);
+            // Data received
+            // data is dispoatched and
+            // processed accordingly
+            $connection->on('data', function ($data) use ($connection) {
+                $this->logger->addDebug("received data: ".$data);
+                $response = $this->dispatcher->process($data, $connection);
+                $connection->write($response);
             });
 
-            $connection->on('end', function () use ($connection) {
-
-                $this->logger->addInfo("consumer disconnected");
+            // disconnection of the consumer
+            // something is not going as expected
+            // check and clean messages if necessary
+            // TODO clean messages and backup everything related to the consumer
+            $connection->on('end', function ($connection) {
+                $consumerId = Board::get()->getConsumerForConnection($connection);
+                $this->dispatcher->process($this->protocol->buildBye($consumerId), $connection);
+                $this->logger->addInfo(sprintf("consumer %s disconnected", $consumerId));
             });
         });
 
-        /*
-        $loop->addPeriodicTimer(1, function() use ($workers, $logger) {
-            $message = Broker::get()->getNextMessage('Q1');
-
-            foreach ($workers as $worker) {
-
-                $logger->addInfo(sprintf(
-                        "sending message [%s] to [%s] data: %s",
-                        $message->getId(),
-                        $worker->getRemoteAddress(),
-                        serialize($message->getData()))
-                );
-
-                $logger->addInfo("un message est envoyé");
-                $worker->write(serialize($message));
-                $worker->write(PhpMQ\Utility\MessageBuilder::SEPARATOR);
-            }
+        $loop->addPeriodicTimer(3, function () {
+//            $this->logger->addInfo(var_export(Board::get()->getConsumers(), true));
         });
-        */
-
-        /*
-        $loop->addPeriodicTimer(2, function () use ($logger) {
-            $kmem = memory_get_usage(true) / 1024;
-            $logger->addInfo("Memory: $kmem KiB");
-        });
-        */
 
         // just run the broker and wait for connections
 

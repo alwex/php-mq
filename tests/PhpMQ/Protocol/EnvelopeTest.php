@@ -27,11 +27,12 @@ class EnvelopTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(PhpMQP::VERB_STILL_ALIVE, $envelope->getVerb());
         $this->assertEquals(1, $envelope->getCid());
 
-        $string = $protocol->buildGet(1);
+        $string = $protocol->buildGet(1, 'Q1');
         $envelope = new Envelope($string);
 
         $this->assertEquals(PhpMQP::VERB_GET, $envelope->getVerb());
         $this->assertEquals(1, $envelope->getCid());
+        $this->assertEquals('Q1', $envelope->getQname());
 
         $string = $protocol->buildSuccess(1, 2);
         $envelope = new Envelope($string);

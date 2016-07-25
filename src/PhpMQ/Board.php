@@ -31,9 +31,9 @@ class Board
     {
     }
 
-    public static function get()
+    public static function get($forceNew = false)
     {
-        if (self::$instance == null) {
+        if (self::$instance == null || $forceNew) {
             self::$instance = new self();
         }
 
@@ -63,6 +63,17 @@ class Board
         }
 
         return $consumer;
+    }
+
+    public function getConsumerForConnection(Connection $c)
+    {
+        $cid = null;
+        $connectionId = spl_object_hash($c);
+        if (array_key_exists($connectionId, $this->getConnectionsToConsumers())) {
+            $cid = $this->getConnectionsToConsumers()[$connectionId];
+        }
+
+        return $cid;
     }
 
     public function register($cid, $qname, Connection $connection)

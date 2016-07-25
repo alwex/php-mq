@@ -13,5 +13,8 @@ if (file_exists(__DIR__ . '/../vendor/autoload.php')) {
     require_once __DIR__ . '/../../../autoload.php';
 }
 
-$daemon = new \PhpMQ\BrokerD();
+$logger = new \Monolog\Logger('log');
+$logger->pushHandler(new \Monolog\Handler\StreamHandler('php://stdout', \Monolog\Logger::DEBUG));
+
+$daemon = new \PhpMQ\BrokerD($logger);
 $daemon->run();

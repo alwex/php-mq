@@ -88,4 +88,13 @@ class BoardTest extends \PHPUnit_Framework_TestCase
     {
         Board::get()->unregister("I see dead people");
     }
+
+    public function testGetConsumerForConnection()
+    {
+        $connection = $this->createMock('React\Socket\Connection');
+
+        Board::get()->register(__METHOD__, 'Q1', $connection);
+
+        $this->assertEquals(__METHOD__, Board::get()->getConsumerForConnection($connection));
+    }
 }

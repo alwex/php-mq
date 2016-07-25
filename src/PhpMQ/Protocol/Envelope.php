@@ -15,6 +15,7 @@ class Envelope
     private $cid;
     private $qname;
     private $mid;
+    private $message;
 
     public function __construct($string)
     {
@@ -37,6 +38,10 @@ class Envelope
             case PhpMQP::VERB_RETRY:
                 $this->cid = $values[1];
                 $this->mid = $values[2];
+                break;
+            case PhpMQP::VERB_PRODUCE:
+                $this->qname = $values[1];
+                $this->message = $values[2];
                 break;
         }
     }

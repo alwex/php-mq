@@ -76,6 +76,10 @@ class Dispatcher
             case PhpMQP::VERB_FAILURE:
                 $response = $this->failure($envelope);
                 break;
+
+            case PhpMQP::VERB_PRODUCE:
+                $response = $this->produce($envelope);
+                break;
         }
 
         return $response;
@@ -96,6 +100,13 @@ class Dispatcher
         $this->logger->addInfo(sprintf("consumer %s unregistered", $e->getCid()));
 
         return $this->protocol->buildAck(PhpMQP::VERB_BYE);
+    }
+
+    public function produce($e)
+    {
+        $response = "truc";
+
+        return $response;
     }
 
     public function stillAlive(Envelope $e)

@@ -9,7 +9,7 @@
 namespace PhpMQ\Protocol;
 
 
-use PhpMQ\Repository\Message;
+use PhpMQ\Entity\Message;
 
 class PhpMQP
 {

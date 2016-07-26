@@ -7,7 +7,7 @@
  */
 
 
-namespace PhpMQ\Repository;
+namespace PhpMQ\Entity;
 
 /**
  * @Entity @Table(name="queues")

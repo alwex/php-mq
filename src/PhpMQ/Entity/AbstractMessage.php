@@ -6,8 +6,10 @@
  * Time: 4:24 PM
  */
 
-namespace PhpMQ\Repository;
+namespace PhpMQ\Entity;
 
+
+use Doctrine\ORM\Mapping as ORM;
 
 class AbstractMessage extends AbstractEntity
 {
@@ -26,6 +28,12 @@ class AbstractMessage extends AbstractEntity
      * @var string
      */
     protected $data;
+
+    /**
+     * @Column(type="text")
+     * @var string
+     */
+    protected $status;
 
     /**
      * @param $data mixed
@@ -58,4 +66,21 @@ class AbstractMessage extends AbstractEntity
     {
         $this->priority = $priority;
     }
+
+    /**
+     * @return string
+     */
+    public function getStatus()
+    {
+        return $this->status;
+    }
+
+    /**
+     * @param string $status
+     */
+    public function setStatus($status)
+    {
+        $this->status = $status;
+    }
+
 }

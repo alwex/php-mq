@@ -6,7 +6,7 @@
  * Time: 3:37 PM
  */
 
-namespace PhpMQ\Repository;
+namespace PhpMQ\Entity;
 
 /**
  * Class AbstractEntity

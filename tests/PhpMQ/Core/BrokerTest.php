@@ -6,43 +6,50 @@
  * Time: 3:14 PM
  */
 
-namespace PhpMQ;
+namespace PhpMQ\Core;
 
 
-use PhpMQ\Repository\Message;
-use PhpMQ\Repository\Queue;
+use PhpMQ\Configuration;
+use PhpMQ\Entity\Message;
+use PhpMQ\Entity\Queue;
 
 class BrokerTest extends \PHPUnit_Framework_TestCase
 {
 
     /**
-     * @beforeClass
+     * @var Broker
      */
-    public static function beforeClass()
+    public $broker;
+    
+    /**
+     * @before
+     */
+    public function setUp()
     {
-        Broker::get()->clearAll();
+        $this->broker = new Broker(Configuration::load());
+        $this->broker->clearAll();
     }
 
     public function testBrokerGet()
     {
-        $broker = Broker::get();
-        $this->assertInstanceOf('PhpMQ\Broker', $broker);
+        $broker = $this->broker;
+        $this->assertInstanceOf('PhpMQ\Core\Broker', $broker);
     }
 
     public function testBrokerGetEntityManager()
     {
-        $broker = Broker::get();
+        $broker = $this->broker;
         $this->assertInstanceOf('Doctrine\Orm\EntityManager', $broker->getEntityManager());
     }
 
     public function testBrokerCreateQueue()
     {
-        $broker = Broker::get();
+        $broker = $this->broker;
         $broker->createQueue('Q1');
 
         /** @var Queue $queue */
         $queue = $broker->getEntityManager()
-            ->getRepository('PhpMQ\Repository\Queue')
+            ->getRepository('PhpMQ\Entity\Queue')
             ->findOneBy(array('name' => 'Q1'));
 
         $this->assertEquals('Q1', $queue->getName());
@@ -50,7 +57,9 @@ class BrokerTest extends \PHPUnit_Framework_TestCase
 
     public function testBrokerPostMessage()
     {
-        $broker = Broker::get();
+        $broker = $this->broker;
+
+        $broker->createQueue('Q1');
 
         $broker->postMessage('Q1', 'some data 1', 1);
         $broker->postMessage('Q1', 'some data 2', 1);

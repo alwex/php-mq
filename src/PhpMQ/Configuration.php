@@ -11,6 +11,7 @@ namespace PhpMQ;
 
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Tools\Setup;
+use Monolog\Logger;
 use Symfony\Component\Yaml\Yaml;
 
 class Configuration
@@ -28,6 +29,10 @@ class Configuration
      */
     private $entityManager;
 
+    /**
+     * @var Logger
+     */
+    private $logger;
 
     public static function load()
     {
@@ -57,12 +62,15 @@ class Configuration
 
             // doctrine configuration
             $isDev = true;
-            $config = Setup::createAnnotationMetadataConfiguration(array(__DIR__."/Repository"), $isDev);
+            $config = Setup::createAnnotationMetadataConfiguration(array(__DIR__."/Entity"), $isDev);
 
             $connection = $this->params['db'];
 
             // obtaining the entity manager
             $this->entityManager = $entityManager = EntityManager::create($connection, $config);
+
+            $this->logger = new \Monolog\Logger('log');
+            $this->logger->pushHandler(new \Monolog\Handler\StreamHandler('php://stdout', \Monolog\Logger::DEBUG));
         }
     }
 
@@ -80,5 +88,13 @@ class Configuration
     public function getEntityManager()
     {
         return $this->entityManager;
+    }
+
+    /**
+     * @return Logger
+     */
+    public function getLogger()
+    {
+        return $this->logger;
     }
 }

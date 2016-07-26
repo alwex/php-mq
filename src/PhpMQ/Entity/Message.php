@@ -6,7 +6,7 @@
  * Time: 6:58 PM
  */
 
-namespace PhpMQ\Repository;
+namespace PhpMQ\Entity;
 
 
 use Doctrine\ORM\Mapping as ORM;

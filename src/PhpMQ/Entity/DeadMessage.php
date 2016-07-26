@@ -6,7 +6,7 @@
  * Time: 4:19 PM
  */
 
-namespace PhpMQ\Repository;
+namespace PhpMQ\Entity;
 
 /**
  * @Entity @Table(name="dead_messages")

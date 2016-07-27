@@ -9,6 +9,7 @@
 namespace PhpMQ\Core;
 
 
+use Cmyker\DoctrineSqlLogger\Logger;
 use Doctrine\ORM\EntityManager;
 use PhpMQ\Configuration;
 use PhpMQ\Entity\Message;
@@ -61,7 +62,11 @@ class Broker
     }
 
     /**
-     * @param $qname
+     * important!
+     * if the queue does not exists then
+     * the queue is created and persisted
+     *
+     * @param $queueName
      * @return Queue
      */
     public function getQueueByName($queueName)
@@ -71,10 +76,7 @@ class Broker
             ->findOneBy(array('name' => $queueName));
 
         if ($queue == null) {
-            throw new RuntimeException(sprintf(
-                'Queue %s does not exists!',
-                $queueName
-            ));
+            $queue = $this->createQueue($queueName);
         }
 
         return $queue;
@@ -144,6 +146,32 @@ class Broker
 
         // retrieve next message to process
         // by queue and priority
+
+        $q = $this->getEntityManager()
+            ->getRepository('PhpMQ\Entity\Message')
+            ->createQueryBuilder('m');
+
+        $q->where($q->expr()->eq('m.queue', ':queue'))
+            ->andWhere($q->expr()->in('m.status', [Message::STATUS_NEW, Message::STATUS_RETRY]))
+            ->andWhere($q->expr()->lt('m.nextAttempt', ':date_now'))
+            ->orderBy('m.priority', 'ASC')
+            ->addOrderBy('m.updatedAt', 'ASC')
+            ->addOrderBy('m.retryCount', 'ASC')
+            ->addOrderBy('m.id', 'ASC')
+            ->addOrderBy('m.nextAttempt', 'ASC')
+
+            ->setParameter(':date_now', new \DateTime())
+            ->setParameter(':queue', $queue);
+
+        //$connection = $this->getEntityManager()->getConnection();
+        //$sqlLogger = new Logger($connection);
+        //$connection->getConfiguration()->setSQLLogger($sqlLogger);
+
+        $messages = $q->getQuery()->getResult();
+        $message = array_shift($messages);
+
+        //echo $sqlLogger->lastQuery;
+        /*
         $message = $this->getEntityManager()
             ->getRepository('PhpMQ\Entity\Message')
             ->findOneBy(
@@ -151,8 +179,8 @@ class Broker
                     'queue' => $queue,
                     'status' => array(
                         Message::STATUS_NEW,
-                        Message::STATUS_RETRY
-                    ),
+                        Message::STATUS_RETRY,
+                    )
                 ),
                 array(
                     'priority' => 'ASC',
@@ -161,10 +189,14 @@ class Broker
                     'id' => 'ASC',
                 )
             );
+        */
 
-        $message->setStatus(Message::STATUS_PROCESSING);
-        $this->getEntityManager()
-            ->flush($message);
+        if ($message != null) {
+
+            $message->setStatus(Message::STATUS_PROCESSING);
+            $this->getEntityManager()
+                ->flush($message);
+        }
 
         return $message;
     }
@@ -176,13 +208,6 @@ class Broker
     {
         $message = $this->getMessageById($id);
 
-        if ($message == null) {
-            throw new RuntimeException(sprintf(
-                'message with id %s does not exists',
-                $id
-            ));
-        }
-
         $this->getEntityManager()
             ->remove($message);
 
@@ -190,22 +215,19 @@ class Broker
             ->flush();
     }
 
-    public function setRetry($id)
+    public function setRetry($id, $delay)
     {
         $message = $this->getMessageById($id);
 
-        if ($message == null) {
-            throw new RuntimeException(sprintf(
-                'message with id %s does not exists',
-                $id
-            ));
-        }
-
         $message->setStatus(Message::STATUS_RETRY);
+        $nextAttemptDate = new \DateTime();
+        $nextAttemptDate->add(new \DateInterval('PT'.$delay.'S'));
+
+        $message->setNextAttempt($nextAttemptDate);
         $message->setRetryCount($message->getRetryCount() + 1);
 
         $this->getEntityManager()
-            ->flush($message);
+            ->flush();
     }
 
     /**

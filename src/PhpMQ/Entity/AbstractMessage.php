@@ -18,6 +18,13 @@ class AbstractMessage extends AbstractEntity
     const STATUS_PROCESSING = 'PROCESSING';
     const STATUS_ACK = '';
 
+
+    /**
+     * @Column(type="datetime", name="next_attempt", nullable=true)
+     * @var \DateTime
+     */
+    protected $nextAttempt;
+
     /**
      * @Column(type="integer", nullable=false)
      * @var int
@@ -41,6 +48,18 @@ class AbstractMessage extends AbstractEntity
      * @var int
      */
     protected $retryCount = 0;
+
+    /**
+     * @PrePersist
+     */
+    public function create()
+    {
+        $nextAttemptDate = new \DateTime();
+        $nextAttemptDate->sub(new \DateInterval('PT1S'));
+
+        $this->setNextAttempt($nextAttemptDate);
+        parent::create();
+    }
 
     /**
      * @param $data mixed
@@ -106,5 +125,20 @@ class AbstractMessage extends AbstractEntity
         $this->retryCount = $retryCount;
     }
 
+    /**
+     * @return \DateTime
+     */
+    public function getNextAttempt()
+    {
+        return $this->nextAttempt;
+    }
+
+    /**
+     * @param \DateTime $nextAttempt
+     */
+    public function setNextAttempt($nextAttempt)
+    {
+        $this->nextAttempt = $nextAttempt;
+    }
 
 }

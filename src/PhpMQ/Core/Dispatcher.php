@@ -52,6 +52,7 @@ class Dispatcher
             // create it in database
             // and return the creation status
             case Packet::P_VERB_POST:
+
                 $message = $this->broker->postMessage(
                     $p->getQname(),
                     $p->getData(),
@@ -67,6 +68,26 @@ class Dispatcher
                 );
                 break;
 
+            // the consumer just connect
+            // himself to the broker
+            // let's send hime a first
+            // message to play with
+            case Packet::P_VERB_HELLO:
+                $message = $this->broker->getNextMessage($p->getQname());
+
+                if ($message != null) {
+                    $response = new Packet(
+                        Packet::P_VERB_MESSAGE,
+                        $message->getId(),
+                        $p->getQname(),
+                        $message->getData(),
+                        $message->getPriority()
+                    );
+                } else {
+                    $response = null;
+                }
+                break;
+
             // the consummer successfully processed
             // the previous message, he need a
             // new one to process
@@ -76,28 +97,35 @@ class Dispatcher
 
                 $message = $this->broker->getNextMessage($p->getQname());
 
-                $response = new Packet(
-                    Packet::P_VERB_MESSAGE,
-                    $message->getId(),
-                    $p->getQname(),
-                    $message->getData(),
-                    $message->getPriority()
-                );
+                if ($message != null) {
+                    $response = new Packet(
+                        Packet::P_VERB_MESSAGE,
+                        $message->getId(),
+                        $p->getQname(),
+                        $message->getData(),
+                        $message->getPriority()
+                    );
+                } else {
+                    $response = null;
+                }
                 break;
 
-
             case Packet::P_VERB_RETRY:
-                $this->broker->setRetry($p->getId());
+                $this->broker->setRetry($p->getId(), 10);
 
                 $message = $this->broker->getNextMessage($p->getQname());
 
-                $response = new Packet(
-                    Packet::P_VERB_MESSAGE,
-                    $message->getId(),
-                    $p->getQname(),
-                    $message->getData(),
-                    $message->getPriority()
-                );
+                if ($message != null) {
+                    $response = new Packet(
+                        Packet::P_VERB_MESSAGE,
+                        $message->getId(),
+                        $p->getQname(),
+                        $message->getData(),
+                        $message->getPriority()
+                    );
+                } else {
+                    $response = null;
+                }
                 break;
             case Packet::P_VERB_FAILURE:
                 break;

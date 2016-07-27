@@ -63,13 +63,14 @@ class BrokerTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('Q1', $queue->getName());
     }
 
-    /**
-     * @expectedException RuntimeException
-     * @expectedExceptionMessage Queue Q1 does not exists!
-     */
     public function testBrokerPostMessageOnNoQueue()
     {
-        $this->broker->postMessage('Q1', 'some data 1', 1);
+        $message = $this->broker->postMessage('Q1', 'some data 1', 1);
+        $expected = $this->broker->getNextMessage('Q1');
+
+        $this->assertNotNull($message);
+        $this->assertNotNull($expected);
+        $this->assertEquals($expected, $message);
     }
 
     public function testBrokerPostMessage()
@@ -103,44 +104,6 @@ class BrokerTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($postedMessage, $message);
     }
 
-    /**
-     * @expectedException RuntimeException
-     * @expectedExceptionMessage message with id
-     */
-    public function testRemoveMessageThatDoesNotExists()
-    {
-        $this->broker->removeMessage('OOOO');
-    }
-
-    /**
-     * @expectedException RuntimeException
-     * @expectedExceptionMessage message with id
-     */
-    public function testRemoveMessage()
-    {
-        $this->broker->createQueue('Q1');
-        $postedMessage = $this->broker->postMessage('Q1', 'message x', 4);
-
-        $messageId = $postedMessage->getId();
-
-        $this->broker->removeMessage($messageId);
-        // remove it again to check that
-        // the message is no more in the database
-        $this->broker->removeMessage($messageId);
-    }
-
-    /**
-     * @expectedException RuntimeException
-     * @expectedExceptionMessage Queue QX does not exists!
-     */
-    public function testGetMessageFromAnUnexistingQueue()
-    {
-        $this->broker->createQueue('Q1');
-        $postedMessage = $this->broker->postMessage('Q1', 'message x', 4);
-
-        $message = $this->broker->getNextMessage('QX');
-    }
-
     public function testPostMessageOnMultipleQueues()
     {
         $this->broker->createQueue('Q1');
@@ -172,12 +135,12 @@ class BrokerTest extends \PHPUnit_Framework_TestCase
     {
         $this->broker->createQueue('Q1');
         $message = $this->broker->postMessage('Q1', 'some data 1', 1);
-        $this->broker->setRetry($message->getId());
+        $this->broker->setRetry($message->getId(), 1);
 
         $this->assertEquals(Message::STATUS_RETRY, $message->getStatus());
         $this->assertEquals(1, $message->getRetryCount());
 
-        $this->broker->setRetry($message->getId());
+        $this->broker->setRetry($message->getId(), 1);
         $this->assertEquals(2, $message->getRetryCount());
     }
 }

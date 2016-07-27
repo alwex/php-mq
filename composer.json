@@ -26,7 +26,8 @@
         "symfony/yaml": "~2.8",
         "doctrine/orm": "2.4.*",
         "monolog/monolog": "^1.20",
-        "react/react": "^0.4.2"
+        "react/react": "^0.4.2",
+        "cmyker/doctrine-sql-logger": "dev-master"
     },
     "require-dev": {
         "phpunit/phpunit": "*"

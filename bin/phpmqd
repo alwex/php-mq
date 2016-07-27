@@ -3,18 +3,116 @@
 /**
  * Created by PhpStorm.
  * User: aguidet
- * Date: 21/07/16
- * Time: 6:20 PM
+ * Date: 27/07/16
+ * Time: 1:01 PM
  */
 
-if (file_exists(__DIR__ . '/../vendor/autoload.php')) {
-    require_once __DIR__ . '/../vendor/autoload.php';
-} else if (file_exists(__DIR__ . '/../../../autoload.php')) {
-    require_once __DIR__ . '/../../../autoload.php';
+$params = getopt('p:');
+
+if (empty($params)) {
+    exit('missing parameter -p [port]'.PHP_EOL);
 }
+
+$port = $params['p'];
+
+// start the autoloader
+if (file_exists(__DIR__.'/../vendor/autoload.php')) {
+    require_once __DIR__.'/../vendor/autoload.php';
+} else {
+    if (file_exists(__DIR__.'/../../../autoload.php')) {
+        require_once __DIR__.'/../../../autoload.php';
+    }
+}
+
+use \PhpMQ\Protocol\Packet;
 
 $logger = new \Monolog\Logger('log');
 $logger->pushHandler(new \Monolog\Handler\StreamHandler('php://stdout', \Monolog\Logger::DEBUG));
+$configuration = \PhpMQ\Configuration::load();
 
-$daemon = new \PhpMQ\BrokerD($logger);
-$daemon->run();
+$dispatcher = new \PhpMQ\Core\Dispatcher($configuration);
+
+echo 'Starting php-mq daemon ...'.PHP_EOL;
+
+$loop = React\EventLoop\Factory::create();
+$socket = new React\Socket\Server($loop);
+
+$loop->addPeriodicTimer(1, function() use ($logger) {
+    $logger->addDebug(memory_get_usage(true));
+    gc_collect_cycles();
+});
+
+$buffer = '';
+
+/** @var Timer[] $timers */
+$timers = [];
+
+// accept connections
+// and deal with consumer messages
+$socket->on('connection', function ($connection) use ($logger, &$buffer, $dispatcher, $loop, &$timers) {
+    /** @var $connection \React\Socket\Connection */
+    $logger->addInfo('Connection accepted from '.$connection->getRemoteAddress());
+
+    $connection->on('data', function ($data) use ($logger, $connection, &$buffer, $dispatcher, $loop, &$timers) {
+        $buffer .= trim($data);
+
+        if (isset($timers[spl_object_hash($connection)])) {
+            $logger->addInfo('Disable timer');
+            $loop->cancelTimer($timers[spl_object_hash($connection)]);
+            unset($timers[spl_object_hash($connection)]);
+        }
+
+        // packet ended
+        // process the current buffer
+        if (strpos($buffer, Packet::P_END) !== false) {
+            $logger->addInfo('received: '.$buffer);
+
+            $p = Packet::parse($buffer);
+            $r = $dispatcher->dispatch($p);
+
+            // clear the buffer
+            $buffer = '';
+
+            if ($r != null) {
+                // return the response
+                $connection->write($r->__toString());
+            } else {
+                $logger->addInfo('No more messages in Queue '.$p->getQname());
+                $timer = $loop->addPeriodicTimer(4, function () use ($logger, $connection, $p, $dispatcher) {
+                    $logger->addInfo('Check new messages in Queue '.$p->getQname());
+                    $hello = new Packet(
+                        Packet::P_VERB_HELLO,
+                        spl_object_hash($connection),
+                        $p->getQname(),
+                        '',
+                        0
+                    );
+                    $r = $dispatcher->dispatch($hello);
+                    if ($r != null) {
+                        // return the response
+                        $logger->addDebug('Restart with '.$r->__toString());
+                        $connection->write($r->__toString());
+                    }
+                });
+
+                // store the timer
+                $timers[spl_object_hash($connection)] = $timer;
+            }
+        }
+    });
+    $connection->on('end', function ($connection) use ($logger, $loop, &$timers) {
+        /** @var $connection \React\Socket\Connection */
+        $logger->addInfo('Connection closed by '.$connection->getRemoteAddress());
+        if (isset($timers[spl_object_hash($connection)])) {
+            $logger->addInfo('Disable timer');
+            $loop->cancelTimer($timers[spl_object_hash($connection)]);
+            unset($timers[spl_object_hash($connection)]);
+        }
+    });
+});
+
+echo 'Now listening on port '.$port.PHP_EOL;
+
+$socket->listen($port);
+$loop->run();
+

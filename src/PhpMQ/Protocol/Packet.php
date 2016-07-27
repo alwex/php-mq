@@ -17,6 +17,7 @@ class Packet
     const P_VERB_FAILURE = 'failure';
     const P_VERB_POST = 'post';
     const P_VERB_MESSAGE = 'message';
+    const P_VERB_HELLO = 'hello';
     const P_END = 'end';
 
     private $verb;
@@ -100,6 +101,46 @@ class Packet
     public function getPriority()
     {
         return $this->priority;
+    }
+
+    /**
+     * @param mixed $verb
+     */
+    public function setVerb($verb)
+    {
+        $this->verb = $verb;
+    }
+
+    /**
+     * @param mixed $id
+     */
+    public function setId($id)
+    {
+        $this->id = $id;
+    }
+
+    /**
+     * @param mixed $qname
+     */
+    public function setQname($qname)
+    {
+        $this->qname = $qname;
+    }
+
+    /**
+     * @param string $data
+     */
+    public function setData($data)
+    {
+        $this->data = $data;
+    }
+
+    /**
+     * @param mixed $priority
+     */
+    public function setPriority($priority)
+    {
+        $this->priority = $priority;
     }
 
 }

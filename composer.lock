@@ -4,9 +4,57 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "3e16d247570a00f9b96f8f38dd4fdc31",
-    "content-hash": "76e243b097aeb6f9c6670ea263d4efcc",
+    "hash": "6d6e1515dc3d8394f8b38a6fa87c3748",
+    "content-hash": "f71416a975857394d35493db08b789b8",
     "packages": [
+        {
+            "name": "cmyker/doctrine-sql-logger",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/cmyker/doctrine-sql-logger.git",
+                "reference": "5abe64dd781b853dc1f26e961a398ca818e6fe40"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/cmyker/doctrine-sql-logger/zipball/5abe64dd781b853dc1f26e961a398ca818e6fe40",
+                "reference": "5abe64dd781b853dc1f26e961a398ca818e6fe40",
+                "shasum": ""
+            },
+            "require": {
+                "doctrine/dbal": ">=2.2.0",
+                "php": ">=5.3.2"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "0.1-dev"
+                }
+            },
+            "autoload": {
+                "psr-0": {
+                    "Cmyker\\DoctrineSqlLogger": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "GNU-GPL"
+            ],
+            "authors": [
+                {
+                    "name": "Igor Prokopenkov",
+                    "email": "cmyk777@gmail.com"
+                }
+            ],
+            "description": "Doctrine SQL query debugger with binded parameters",
+            "homepage": "http://www.github.com/cmyker/doctrine-sql-logger",
+            "keywords": [
+                "doctrine",
+                "logger",
+                "sql"
+            ],
+            "time": "2015-12-04 17:56:25"
+        },
         {
             "name": "cocur/slugify",
             "version": "v1.4.1",
@@ -2928,7 +2976,9 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": [],
+    "stability-flags": {
+        "cmyker/doctrine-sql-logger": 20
+    },
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {

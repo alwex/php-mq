@@ -71,6 +71,9 @@ class Dispatcher
             // the previous message, he need a
             // new one to process
             case Packet::P_VERB_SUCCESS:
+
+                $this->broker->removeMessage($p->getId());
+
                 $message = $this->broker->getNextMessage($p->getQname());
 
                 $response = new Packet(
@@ -84,6 +87,17 @@ class Dispatcher
 
 
             case Packet::P_VERB_RETRY:
+                $this->broker->setRetry($p->getId());
+
+                $message = $this->broker->getNextMessage($p->getQname());
+
+                $response = new Packet(
+                    Packet::P_VERB_MESSAGE,
+                    $message->getId(),
+                    $p->getQname(),
+                    $message->getData(),
+                    $message->getPriority()
+                );
                 break;
             case Packet::P_VERB_FAILURE:
                 break;

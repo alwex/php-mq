@@ -14,6 +14,7 @@ use Doctrine\ORM\Mapping as ORM;
 class AbstractMessage extends AbstractEntity
 {
     const STATUS_NEW = 'NEW';
+    const STATUS_RETRY = 'RETRY';
     const STATUS_PROCESSING = 'PROCESSING';
     const STATUS_ACK = '';
 
@@ -34,6 +35,12 @@ class AbstractMessage extends AbstractEntity
      * @var string
      */
     protected $status;
+
+    /**
+     * @Column(type="integer", nullable=false)
+     * @var int
+     */
+    protected $retryCount = 0;
 
     /**
      * @param $data mixed
@@ -82,5 +89,22 @@ class AbstractMessage extends AbstractEntity
     {
         $this->status = $status;
     }
+
+    /**
+     * @return int
+     */
+    public function getRetryCount()
+    {
+        return $this->retryCount;
+    }
+
+    /**
+     * @param int $retryCount
+     */
+    public function setRetryCount($retryCount)
+    {
+        $this->retryCount = $retryCount;
+    }
+
 
 }

@@ -13,6 +13,7 @@ use Doctrine\ORM\EntityManager;
 use PhpMQ\Configuration;
 use PhpMQ\Entity\Message;
 use PhpMQ\Entity\Queue;
+use PhpMQ\Exception\RuntimeException;
 
 class Broker
 {
@@ -60,6 +61,26 @@ class Broker
     }
 
     /**
+     * @param $qname
+     * @return Queue
+     */
+    public function getQueueByName($queueName)
+    {
+        $queue = $this->getEntityManager()
+            ->getRepository('PhpMQ\Entity\Queue')
+            ->findOneBy(array('name' => $queueName));
+
+        if ($queue == null) {
+            throw new RuntimeException(sprintf(
+                'Queue %s does not exists!',
+                $queueName
+            ));
+        }
+
+        return $queue;
+    }
+
+    /**
      * @param $queueName
      * @param $data
      * @param $priority
@@ -67,15 +88,12 @@ class Broker
      */
     public function postMessage($queueName, $data, $priority)
     {
+        $queue = $this->getQueueByName($queueName);
+
         $message = new Message();
         $message->setData($data);
         $message->setPriority($priority);
         $message->setStatus(Message::STATUS_NEW);
-
-        $queue = $this->getEntityManager()
-            ->getRepository('PhpMQ\Entity\Queue')
-            ->findOneBy(array('name' => $queueName));
-
         $message->setQueue($queue);
 
         $this->getEntityManager()->persist($message);
@@ -117,9 +135,7 @@ class Broker
     public function getNextMessage($queueName)
     {
         // retrieve the queue by name
-        $queue = $this->getEntityManager()
-            ->getRepository('PhpMQ\Entity\Queue')
-            ->findOneBy(array('name' => $queueName));
+        $queue = $this->getQueueByName($queueName);
 
         // update last read at to the queue
         $queue->setLastReadAt(new \DateTime());
@@ -130,11 +146,76 @@ class Broker
         // by queue and priority
         $message = $this->getEntityManager()
             ->getRepository('PhpMQ\Entity\Message')
-            ->findOneBy(array('queue' => $queue), array('priority' => 'ASC'));
+            ->findOneBy(
+                array(
+                    'queue' => $queue,
+                    'status' => array(
+                        Message::STATUS_NEW,
+                        Message::STATUS_RETRY
+                    ),
+                ),
+                array(
+                    'priority' => 'ASC',
+                    'updatedAt' => 'ASC',
+                    'retryCount' => 'ASC',
+                    'id' => 'ASC',
+                )
+            );
 
         $message->setStatus(Message::STATUS_PROCESSING);
         $this->getEntityManager()
             ->flush($message);
+
+        return $message;
+    }
+
+    /**
+     * @param $id
+     */
+    public function removeMessage($id)
+    {
+        $message = $this->getMessageById($id);
+
+        if ($message == null) {
+            throw new RuntimeException(sprintf(
+                'message with id %s does not exists',
+                $id
+            ));
+        }
+
+        $this->getEntityManager()
+            ->remove($message);
+
+        $this->getEntityManager()
+            ->flush();
+    }
+
+    public function setRetry($id)
+    {
+        $message = $this->getMessageById($id);
+
+        if ($message == null) {
+            throw new RuntimeException(sprintf(
+                'message with id %s does not exists',
+                $id
+            ));
+        }
+
+        $message->setStatus(Message::STATUS_RETRY);
+        $message->setRetryCount($message->getRetryCount() + 1);
+
+        $this->getEntityManager()
+            ->flush($message);
+    }
+
+    /**
+     * @param $id
+     * @return Message
+     */
+    public function getMessageById($id)
+    {
+        $message = $this->getEntityManager()
+            ->find('PhpMQ\Entity\Message', $id);
 
         return $message;
     }

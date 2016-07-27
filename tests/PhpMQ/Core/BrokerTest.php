@@ -12,15 +12,15 @@ namespace PhpMQ\Core;
 use PhpMQ\Configuration;
 use PhpMQ\Entity\Message;
 use PhpMQ\Entity\Queue;
+use PhpMQ\Exception\RuntimeException;
 
 class BrokerTest extends \PHPUnit_Framework_TestCase
 {
-
     /**
      * @var Broker
      */
     public $broker;
-    
+
     /**
      * @before
      */
@@ -28,6 +28,14 @@ class BrokerTest extends \PHPUnit_Framework_TestCase
     {
         $this->broker = new Broker(Configuration::load());
         $this->broker->clearAll();
+    }
+
+    /**
+     * @after
+     */
+    public function tearDown()
+    {
+        //$this->broker->clearAll();
     }
 
     public function testBrokerGet()
@@ -55,19 +63,121 @@ class BrokerTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('Q1', $queue->getName());
     }
 
+    /**
+     * @expectedException RuntimeException
+     * @expectedExceptionMessage Queue Q1 does not exists!
+     */
+    public function testBrokerPostMessageOnNoQueue()
+    {
+        $this->broker->postMessage('Q1', 'some data 1', 1);
+    }
+
     public function testBrokerPostMessage()
     {
         $broker = $this->broker;
 
         $broker->createQueue('Q1');
 
-        $broker->postMessage('Q1', 'some data 1', 1);
-        $broker->postMessage('Q1', 'some data 2', 1);
-        $broker->postMessage('Q1', 'some data 0', 0);
+        $message1 = $broker->postMessage('Q1', 'some data 1', 1);
+        $message2 = $broker->postMessage('Q1', 'some data 2', 1);
+        $message3 = $broker->postMessage('Q1', 'some data 3', 0);
 
         /** @var Message $message */
         $message = $broker->getNextMessage('Q1');
+        $this->assertEquals($message3, $message);
 
-        $this->assertEquals(0, $message->getPriority());
+        $message = $broker->getNextMessage('Q1');
+        $this->assertEquals($message1, $message);
+
+        $message = $broker->getNextMessage('Q1');
+        $this->assertEquals($message2, $message);
+    }
+
+    public function testGetMessageById()
+    {
+        $this->broker->createQueue('Q1');
+        $postedMessage = $this->broker->postMessage('Q1', 'mesage x', 4);
+
+        $message = $this->broker->getMessageById($postedMessage->getId());
+
+        $this->assertEquals($postedMessage, $message);
+    }
+
+    /**
+     * @expectedException RuntimeException
+     * @expectedExceptionMessage message with id
+     */
+    public function testRemoveMessageThatDoesNotExists()
+    {
+        $this->broker->removeMessage('OOOO');
+    }
+
+    /**
+     * @expectedException RuntimeException
+     * @expectedExceptionMessage message with id
+     */
+    public function testRemoveMessage()
+    {
+        $this->broker->createQueue('Q1');
+        $postedMessage = $this->broker->postMessage('Q1', 'message x', 4);
+
+        $messageId = $postedMessage->getId();
+
+        $this->broker->removeMessage($messageId);
+        // remove it again to check that
+        // the message is no more in the database
+        $this->broker->removeMessage($messageId);
+    }
+
+    /**
+     * @expectedException RuntimeException
+     * @expectedExceptionMessage Queue QX does not exists!
+     */
+    public function testGetMessageFromAnUnexistingQueue()
+    {
+        $this->broker->createQueue('Q1');
+        $postedMessage = $this->broker->postMessage('Q1', 'message x', 4);
+
+        $message = $this->broker->getNextMessage('QX');
+    }
+
+    public function testPostMessageOnMultipleQueues()
+    {
+        $this->broker->createQueue('Q1');
+        $this->broker->createQueue('Q2');
+        $this->broker->createQueue('Q3');
+
+        $m1Q1 = $this->broker->postMessage('Q1', 'some data 1', 1);
+        $m2Q1 = $this->broker->postMessage('Q1', 'some data 2', 1);
+        $m3Q1 = $this->broker->postMessage('Q1', 'some data 3', 1);
+        $m1Q2 = $this->broker->postMessage('Q2', 'some data 4', 1);
+        $m2Q2 = $this->broker->postMessage('Q2', 'some data 5', 1);
+        $m1Q3 = $this->broker->postMessage('Q3', 'some data 6', 1);
+        $m2Q3 = $this->broker->postMessage('Q3', 'some data 7', 1);
+
+        $message = $this->broker->getNextMessage('Q3');
+        $this->assertEquals($m1Q3, $message);
+
+        $message = $this->broker->getNextMessage('Q2');
+        $this->assertEquals($m1Q2, $message);
+
+        $message = $this->broker->getNextMessage('Q1');
+        $this->assertEquals($m1Q1, $message);
+
+        $message = $this->broker->getNextMessage('Q3');
+        $this->assertEquals($m2Q3, $message);
+    }
+
+    public function testRetryMessage()
+    {
+        $this->broker->createQueue('Q1');
+        $message = $this->broker->postMessage('Q1', 'some data 1', 1);
+        $this->broker->setRetry($message->getId());
+
+        $this->assertEquals(Message::STATUS_RETRY, $message->getStatus());
+        $this->assertEquals(1, $message->getRetryCount());
+
+        $this->broker->setRetry($message->getId());
+        $this->assertEquals(2, $message->getRetryCount());
     }
 }
